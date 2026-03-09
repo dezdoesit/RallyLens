@@ -7,7 +7,8 @@ final class CameraManager: NSObject, ObservableObject {
     @Published var isRunning = false
     @Published var permissionGranted = false
 
-    var onFrame: (@Sendable (CMSampleBuffer) -> Void)?
+    // nonisolated so the delegate callback can access it without actor hop
+    nonisolated(unsafe) var onFrame: (@Sendable (CMSampleBuffer) -> Void)?
 
     private let session = AVCaptureSession()
     private let videoOutput = AVCaptureVideoDataOutput()
