@@ -29,6 +29,7 @@ targets:
         INFOPLIST_FILE: TennisVision/Info.plist
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         CODE_SIGN_STYLE: Automatic
+        CODE_SIGN_IDENTITY: "-"
         SWIFT_EMIT_LOC_STRINGS: "YES"
     info:
       path: TennisVision/Info.plist

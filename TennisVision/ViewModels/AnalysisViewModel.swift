@@ -68,13 +68,11 @@ final class InferenceEngine: @unchecked Sendable {
                 let pose = try? poseEstimator.predict(pixelBuffer: pixelBuffer)
 
                 // Court detection — every 10 frames (court doesn't move fast)
+                // Court detector handles its own resize to 360×640 from the pixelBuffer
                 courtFrameCounter += 1
                 var court: CourtDetectionResult? = nil
                 if courtFrameCounter % 10 == 0 {
-                    // Court detector takes single frame (first 3 channels of the 9-channel stack)
-                    let singleFrameSize = 3 * 360 * 640
-                    let singleFrame = Array(frames[0..<singleFrameSize])
-                    court = try? courtDetector?.predict(singleFrameData: singleFrame)
+                    court = try? courtDetector?.predict(pixelBuffer: pixelBuffer)
                 }
 
                 // FPS calculation

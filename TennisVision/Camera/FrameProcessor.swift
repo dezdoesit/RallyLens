@@ -5,13 +5,13 @@ import CoreMedia
 final class FrameProcessor: @unchecked Sendable {
 
     private let ciContext = CIContext(options: [.useSoftwareRenderer: false])
-    private let targetWidth = 640
-    private let targetHeight = 360
+    private let targetWidth = 512
+    private let targetHeight = 288
 
     private var frameBuffer: [CVPixelBuffer] = []
     private let bufferCapacity = 3
 
-    /// Process a sample buffer and return (resized pixelBuffer, 9×360×640 float array)
+    /// Process a sample buffer and return (resized pixelBuffer, 9×288×512 float array)
     /// Returns nil until 3 frames have been collected.
     func process(_ sampleBuffer: CMSampleBuffer) -> (CVPixelBuffer, [Float32])? {
         guard let pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) else { return nil }
