@@ -1,6 +1,7 @@
 import SwiftUI
 import Combine
 import AVFoundation
+import os
 
 enum InputMode: Sendable {
     case camera
@@ -8,6 +9,7 @@ enum InputMode: Sendable {
 }
 
 /// Handles inference on a dedicated serial queue, publishing results to the main actor.
+/// Uses an atomic flag to enforce backpressure — frames are dropped when inference is busy.
 final class InferenceEngine: @unchecked Sendable {
 
     private let frameProcessor = FrameProcessor()
@@ -16,6 +18,9 @@ final class InferenceEngine: @unchecked Sendable {
     private let courtDetector = CourtDetectorInference()
 
     private let inferenceQueue = DispatchQueue(label: "com.tennisvision.inference", qos: .userInitiated)
+
+    // Backpressure: only one frame in-flight at a time
+    private let isBusy = OSAllocatedUnfairLock(initialState: false)
 
     private var lastFrameTime: CFTimeInterval = 0
     private var frameCount = 0
@@ -33,29 +38,43 @@ final class InferenceEngine: @unchecked Sendable {
     }
 
     func processFrame(_ sampleBuffer: CMSampleBuffer) {
+        // Drop frame if inference is already running
+        let canProcess = isBusy.withLock { busy -> Bool in
+            if busy { return false }
+            busy = true
+            return true
+        }
+        guard canProcess else { return }
+
         inferenceQueue.async { [self] in
-            guard let (pixelBuffer, frames) = frameProcessor.process(sampleBuffer) else { return }
-
-            let ball = try? ballTracker?.predict(frames: frames)
-            let pose = try? poseEstimator.predict(pixelBuffer: pixelBuffer)
-
-            courtFrameCounter += 1
-            var court: CourtDetectionResult? = nil
-            if courtFrameCounter % 10 == 0 {
-                court = courtDetector.predict(frames: frames)
+            defer {
+                isBusy.withLock { $0 = false }
             }
 
-            // FPS calculation
-            let now = CACurrentMediaTime()
-            frameCount += 1
-            let elapsed = now - lastFrameTime
-            let currentFps = elapsed > 0 ? Double(frameCount) / elapsed : 0
-            if elapsed > 1.0 {
-                frameCount = 0
-                lastFrameTime = now
-            }
+            autoreleasepool {
+                guard let (pixelBuffer, frames) = frameProcessor.process(sampleBuffer) else { return }
 
-            onResults?(ball, pose, court, currentFps)
+                let ball = try? ballTracker?.predict(frames: frames)
+                let pose = try? poseEstimator.predict(pixelBuffer: pixelBuffer)
+
+                courtFrameCounter += 1
+                var court: CourtDetectionResult? = nil
+                if courtFrameCounter % 10 == 0 {
+                    court = courtDetector.predict(frames: frames)
+                }
+
+                // FPS calculation
+                let now = CACurrentMediaTime()
+                frameCount += 1
+                let elapsed = now - lastFrameTime
+                let currentFps = elapsed > 0 ? Double(frameCount) / elapsed : 0
+                if elapsed > 1.0 {
+                    frameCount = 0
+                    lastFrameTime = now
+                }
+
+                onResults?(ball, pose, court, currentFps)
+            }
         }
     }
 

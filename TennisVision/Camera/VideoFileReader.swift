@@ -62,8 +62,14 @@ final class VideoFileReader: @unchecked Sendable {
         let frameDuration = TimeInterval(1.0 / max(frameRate, 1.0))
 
         while isReading && reader.status == .reading {
-            guard let sampleBuffer = trackOutput.copyNextSampleBuffer() else { break }
-            onFrame?(sampleBuffer)
+            autoreleasepool {
+                guard let sampleBuffer = trackOutput.copyNextSampleBuffer() else {
+                    isReading = false
+                    return
+                }
+                onFrame?(sampleBuffer)
+            }
+            // Pace to approximate real-time; also gives inference time to finish
             Thread.sleep(forTimeInterval: frameDuration)
         }
 

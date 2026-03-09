@@ -15,73 +15,71 @@ final class BallTrackerInference: @unchecked Sendable {
     private let heatmapH = 360
     private let numClasses = 256
 
+    // Reuse input MLMultiArray to avoid per-frame allocation
+    private let inputArray: MLMultiArray
+
     init() throws {
         let config = MLModelConfiguration()
         config.computeUnits = .all
         self.model = try BallTracker(configuration: config)
+        self.inputArray = try MLMultiArray(shape: [1, 9, 360, 640], dataType: .float32)
     }
 
     func predict(frames: [Float32]) throws -> BallDetectionResult {
-        let shape: [NSNumber] = [1, 9, 360, 640]
-        let mlArray = try MLMultiArray(shape: shape, dataType: .float32)
-
         let count = min(frames.count, 9 * 360 * 640)
-        frames.withUnsafeBufferPointer { ptr in
-            mlArray.dataPointer.assumingMemoryBound(to: Float32.self)
-                .initialize(from: ptr.baseAddress!, count: count)
+        let dest = inputArray.dataPointer.assumingMemoryBound(to: Float32.self)
+        frames.withUnsafeBufferPointer { src in
+            dest.update(from: src.baseAddress!, count: count)
         }
 
-        let input = BallTrackerInput(input_frames: mlArray)
+        let input = BallTrackerInput(input_frames: inputArray)
         let output = try model.prediction(input: input)
 
         // Output shape: (1, 256, 360, 640)
-        // Take argmax along channel dimension to get per-pixel heatmap value
-        return parseOutput(output.heatmap)
+        return parseOutputFast(output.heatmap)
     }
 
-    private func parseOutput(_ output: MLMultiArray) -> BallDetectionResult {
+    /// Efficient heatmap parsing: scan channels from 255 down, use vDSP to find
+    /// the peak per channel. The first channel with a confident peak is the ball.
+    private func parseOutputFast(_ output: MLMultiArray) -> BallDetectionResult {
         let h = heatmapH
         let w = heatmapW
-        let c = numClasses
+        let planeSize = h * w  // 230400
         let ptr = output.dataPointer.assumingMemoryBound(to: Float32.self)
 
-        // For each pixel, find the argmax across 256 channels
-        // Then find the pixel with the highest argmax value (= brightest heatmap)
-        var maxHeatVal: Int = 0
-        var bestX = 0
-        var bestY = 0
-        var bestConfidence: Float = 0
+        var bestChannel = 0
+        var bestVal: Float = 0
+        var bestIdx: vDSP_Length = 0
 
-        for y in 0..<h {
-            for x in 0..<w {
-                var pixMax: Float = -Float.greatestFiniteMagnitude
-                var pixArgmax: Int = 0
+        // Scan from highest channel (brightest) downward
+        // The ball pixel will have high probability in a high channel
+        for c in stride(from: numClasses - 1, through: 0, by: -1) {
+            let channelPtr = ptr.advanced(by: c * planeSize)
 
-                for ch in 0..<c {
-                    // Layout: [1, 256, 360, 640] → index = ch * h * w + y * w + x
-                    let idx = ch * h * w + y * w + x
-                    let val = ptr[idx]
-                    if val > pixMax {
-                        pixMax = val
-                        pixArgmax = ch
-                    }
-                }
+            var maxVal: Float = 0
+            var maxIdx: vDSP_Length = 0
+            vDSP_maxvi(channelPtr, 1, &maxVal, &maxIdx, vDSP_Length(planeSize))
 
-                if pixArgmax > maxHeatVal {
-                    maxHeatVal = pixArgmax
-                    bestX = x
-                    bestY = y
-                    bestConfidence = pixMax
-                }
+            if maxVal > bestVal {
+                bestVal = maxVal
+                bestIdx = maxIdx
+                bestChannel = c
+            }
+
+            // Early exit: if we found a strong peak in a high channel, that's the ball
+            if bestChannel > 100 && bestVal > 0.5 {
+                break
             }
         }
 
-        let threshold = 50
+        let y = Int(bestIdx) / w
+        let x = Int(bestIdx) % w
+
         return BallDetectionResult(
-            x: Float(bestX) / Float(w),
-            y: Float(bestY) / Float(h),
-            confidence: bestConfidence,
-            isVisible: maxHeatVal > threshold
+            x: Float(x) / Float(w),
+            y: Float(y) / Float(h),
+            confidence: bestVal,
+            isVisible: bestChannel > 50 && bestVal > 0.3
         )
     }
 }
