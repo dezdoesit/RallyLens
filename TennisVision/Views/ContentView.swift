@@ -1,12 +1,12 @@
 import SwiftUI
 import PhotosUI
+import AVKit
 
 struct ContentView: View {
 
     @StateObject private var vm = AnalysisViewModel()
     @State private var showVideoPicker = false
     @State private var selectedVideoItem: PhotosPickerItem?
-    @State private var isLandscape = false
 
     var body: some View {
         GeometryReader { geo in
@@ -19,7 +19,13 @@ struct ContentView: View {
                         .ignoresSafeArea()
                 }
 
-                // Overlay
+                // Video player (only in video mode)
+                if case .videoFile = vm.inputMode, let player = vm.videoPlayer {
+                    VideoPlayerView(player: player)
+                        .ignoresSafeArea()
+                }
+
+                // Analysis overlay on top of video/camera
                 OverlayView(
                     ballResult: vm.ballResult,
                     poseResult: vm.poseResult,
@@ -28,8 +34,9 @@ struct ContentView: View {
                 )
                 .ignoresSafeArea()
 
-                // HUD
+                // HUD + Controls
                 VStack {
+                    // Top: Stats
                     HStack {
                         Spacer()
                         StatsOverlayView(
@@ -39,9 +46,10 @@ struct ContentView: View {
                         )
                         .padding()
                     }
+
                     Spacer()
 
-                    // Bottom controls
+                    // Bottom: Controls
                     HStack(spacing: 20) {
                         Button {
                             Task { await vm.startCamera() }

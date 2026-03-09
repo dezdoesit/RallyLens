@@ -110,6 +110,9 @@ final class AnalysisViewModel: ObservableObject {
     @Published var isProcessing = false
     @Published var inputMode: InputMode = .camera
 
+    /// AVPlayer for displaying the original video alongside analysis overlay
+    @Published var videoPlayer: AVPlayer?
+
     let cameraManager = CameraManager()
     private let engine = InferenceEngine()
     private var videoReader: VideoFileReader?
@@ -156,6 +159,11 @@ final class AnalysisViewModel: ObservableObject {
         engine.reset()
         ballTrajectory = []
 
+        // Create AVPlayer for visual playback of original video
+        let player = AVPlayer(url: url)
+        player.isMuted = true
+        self.videoPlayer = player
+
         do {
             let reader = try await VideoFileReader(url: url)
             self.videoReader = reader
@@ -165,9 +173,13 @@ final class AnalysisViewModel: ObservableObject {
             reader.onFinished = { [weak self] in
                 DispatchQueue.main.async {
                     self?.isProcessing = false
+                    self?.videoPlayer?.pause()
                 }
             }
             isProcessing = true
+
+            // Start both: AVPlayer for display, VideoFileReader for inference
+            player.play()
             reader.start()
         } catch {
             print("Failed to open video: \(error)")
@@ -177,6 +189,8 @@ final class AnalysisViewModel: ObservableObject {
     func stopVideoPlayback() {
         videoReader?.stop()
         videoReader = nil
+        videoPlayer?.pause()
+        videoPlayer = nil
     }
 
     func stopSession() {

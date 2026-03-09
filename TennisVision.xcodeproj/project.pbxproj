@@ -13,6 +13,7 @@
 		319FAD6B12B75356408CA50E /* CameraManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6FB29F315C44053E5CCD5F09 /* CameraManager.swift */; };
 		33F9AF1FE0F433B020424D5A /* FrameProcessor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EF3DB2D8F049C554276B450 /* FrameProcessor.swift */; };
 		6063A233253B0E1F7B3A91DE /* BallTracker.mlpackage in Sources */ = {isa = PBXBuildFile; fileRef = 91ED1193220C4859E79CEDFA /* BallTracker.mlpackage */; };
+		606ED3C054AA3924D4364E68 /* VideoPlayerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 016AE8E3E248262FDCDD11CF /* VideoPlayerView.swift */; };
 		70E081D639F585A3ECD98119 /* CoordinateTransform.swift in Sources */ = {isa = PBXBuildFile; fileRef = 22280D3E0139BADFA637441B /* CoordinateTransform.swift */; };
 		7F5F0D1E16BAA2CBDBD811C3 /* OverlayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 29CA017CEA6DA6BD14981AD6 /* OverlayView.swift */; };
 		82B3EF20041EEE7ADC616129 /* PoseEstimationInference.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3B6BD1C0DAB6CB86A0A89DE /* PoseEstimationInference.swift */; };
@@ -26,18 +27,19 @@
 
 /* Begin PBXFileReference section */
 		00C2262B5E94091507CFD528 /* TennisVisionApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TennisVisionApp.swift; sourceTree = "<group>"; };
+		016AE8E3E248262FDCDD11CF /* VideoPlayerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoPlayerView.swift; sourceTree = "<group>"; };
 		04B7D3F10D53A21BA721CF3D /* CourtDetectorInference.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CourtDetectorInference.swift; sourceTree = "<group>"; };
 		22280D3E0139BADFA637441B /* CoordinateTransform.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoordinateTransform.swift; sourceTree = "<group>"; };
-		22CE4979E28E389A9D5FC379 /* CourtDetector.mlpackage */ = {isa = PBXFileReference; lastKnownFileType = folder.mlpackage; path = CourtDetector.mlpackage; sourceTree = "<group>"; };
+		22CE4979E28E389A9D5FC379 /* CourtDetector.mlpackage */ = {isa = PBXFileReference; path = CourtDetector.mlpackage; sourceTree = "<group>"; };
 		29CA017CEA6DA6BD14981AD6 /* OverlayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OverlayView.swift; sourceTree = "<group>"; };
 		4B76A3ED0678C335C7031B3C /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		4EF3DB2D8F049C554276B450 /* FrameProcessor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FrameProcessor.swift; sourceTree = "<group>"; };
-		6D9AA19382A595205B47997F /* TennisVision.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = TennisVision.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		6D9AA19382A595205B47997F /* TennisVision.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = TennisVision.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		6FB29F315C44053E5CCD5F09 /* CameraManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraManager.swift; sourceTree = "<group>"; };
 		73E79348FA476543F7A4A677 /* CameraPreviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraPreviewView.swift; sourceTree = "<group>"; };
 		78336458C8B94B14ACA2DBDA /* BallTrackerInference.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BallTrackerInference.swift; sourceTree = "<group>"; };
 		8368C0890E0D45E8B59D3C21 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
-		91ED1193220C4859E79CEDFA /* BallTracker.mlpackage */ = {isa = PBXFileReference; lastKnownFileType = folder.mlpackage; path = BallTracker.mlpackage; sourceTree = "<group>"; };
+		91ED1193220C4859E79CEDFA /* BallTracker.mlpackage */ = {isa = PBXFileReference; path = BallTracker.mlpackage; sourceTree = "<group>"; };
 		9E1E46C5F13A15DFE977EBA6 /* AnalysisViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnalysisViewModel.swift; sourceTree = "<group>"; };
 		B45BA9B584804DF8C5407F21 /* VideoFileReader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoFileReader.swift; sourceTree = "<group>"; };
 		F3B6BD1C0DAB6CB86A0A89DE /* PoseEstimationInference.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PoseEstimationInference.swift; sourceTree = "<group>"; };
@@ -74,6 +76,7 @@
 				73E79348FA476543F7A4A677 /* CameraPreviewView.swift */,
 				4B76A3ED0678C335C7031B3C /* ContentView.swift */,
 				F78895DCAF58E950F7995FD3 /* StatsOverlayView.swift */,
+				016AE8E3E248262FDCDD11CF /* VideoPlayerView.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -229,6 +232,7 @@
 				A0847B74E5B45CBE29A2ECEB /* StatsOverlayView.swift in Sources */,
 				C1CF1B35274177C69A536E7E /* TennisVisionApp.swift in Sources */,
 				D8E787CAF8A11C6ED6C5C5A1 /* VideoFileReader.swift in Sources */,
+				606ED3C054AA3924D4364E68 /* VideoPlayerView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -299,7 +303,6 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = LURMZC2XJB;
 				INFOPLIST_FILE = TennisVision/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -383,7 +386,6 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = LURMZC2XJB;
 				INFOPLIST_FILE = TennisVision/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",

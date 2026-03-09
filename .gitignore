@@ -8,3 +8,4 @@ ckpts
 test_output
 Scripts/__pycache__/
 TennisVision/Models/CourtDetector.mlpackage/
+wasb_tennis_best.pth.tar
