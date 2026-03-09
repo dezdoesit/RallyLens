@@ -4,7 +4,7 @@ import Accelerate
 struct BallDetectionResult: Sendable {
     let x: Float          // normalized [0,1]
     let y: Float          // normalized [0,1]
-    let confidence: Float
+    let confidence: Float // heatmap value 0-255
     let isVisible: Bool
 }
 
@@ -13,7 +13,6 @@ final class BallTrackerInference: @unchecked Sendable {
     private let model: BallTracker
     private let heatmapW = 640
     private let heatmapH = 360
-    private let numClasses = 256
 
     // Reuse input MLMultiArray to avoid per-frame allocation
     private let inputArray: MLMultiArray
@@ -35,51 +34,28 @@ final class BallTrackerInference: @unchecked Sendable {
         let input = BallTrackerInput(input_frames: inputArray)
         let output = try model.prediction(input: input)
 
-        // Output shape: (1, 256, 360, 640)
-        return parseOutputFast(output.heatmap)
+        // Output shape: (1, 1, 360, 640) — single-channel heatmap, values 0-255
+        return parseHeatmap(output.heatmap)
     }
 
-    /// Efficient heatmap parsing: scan channels from 255 down, use vDSP to find
-    /// the peak per channel. The first channel with a confident peak is the ball.
-    private func parseOutputFast(_ output: MLMultiArray) -> BallDetectionResult {
-        let h = heatmapH
-        let w = heatmapW
-        let planeSize = h * w  // 230400
-        let ptr = output.dataPointer.assumingMemoryBound(to: Float32.self)
+    private func parseHeatmap(_ heatmap: MLMultiArray) -> BallDetectionResult {
+        let count = heatmapW * heatmapH
+        let ptr = heatmap.dataPointer.assumingMemoryBound(to: Float32.self)
 
-        var bestChannel = 0
-        var bestVal: Float = 0
-        var bestIdx: vDSP_Length = 0
+        // Find peak using vDSP
+        var maxVal: Float = 0
+        var maxIdx: vDSP_Length = 0
+        vDSP_maxvi(ptr, 1, &maxVal, &maxIdx, vDSP_Length(count))
 
-        // Scan from highest channel (brightest) downward
-        // The ball pixel will have high probability in a high channel
-        for c in stride(from: numClasses - 1, through: 0, by: -1) {
-            let channelPtr = ptr.advanced(by: c * planeSize)
+        let y = Int(maxIdx) / heatmapW
+        let x = Int(maxIdx) % heatmapW
 
-            var maxVal: Float = 0
-            var maxIdx: vDSP_Length = 0
-            vDSP_maxvi(channelPtr, 1, &maxVal, &maxIdx, vDSP_Length(planeSize))
-
-            if maxVal > bestVal {
-                bestVal = maxVal
-                bestIdx = maxIdx
-                bestChannel = c
-            }
-
-            // Early exit: if we found a strong peak in a high channel, that's the ball
-            if bestChannel > 100 && bestVal > 0.5 {
-                break
-            }
-        }
-
-        let y = Int(bestIdx) / w
-        let x = Int(bestIdx) % w
-
+        // Ball is visible if heatmap peak > ~50 (out of 255)
         return BallDetectionResult(
-            x: Float(x) / Float(w),
-            y: Float(y) / Float(h),
-            confidence: bestVal,
-            isVisible: bestChannel > 50 && bestVal > 0.3
+            x: Float(x) / Float(heatmapW),
+            y: Float(y) / Float(heatmapH),
+            confidence: maxVal,
+            isVisible: maxVal > 50.0
         )
     }
 }

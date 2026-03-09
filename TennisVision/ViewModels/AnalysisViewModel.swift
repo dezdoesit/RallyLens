@@ -15,7 +15,7 @@ final class InferenceEngine: @unchecked Sendable {
     private let frameProcessor = FrameProcessor()
     private var ballTracker: BallTrackerInference?
     private let poseEstimator = PoseEstimationInference()
-    private let courtDetector = CourtDetectorInference()
+    private var courtDetector: CourtDetectorInference?
 
     private let inferenceQueue = DispatchQueue(label: "com.tennisvision.inference", qos: .userInitiated)
 
@@ -31,9 +31,16 @@ final class InferenceEngine: @unchecked Sendable {
     init() {
         do {
             ballTracker = try BallTrackerInference()
-            print("BallTracker model loaded successfully")
+            print("[TennisVision] BallTracker model loaded")
         } catch {
-            print("Failed to load BallTracker model: \(error)")
+            print("[TennisVision] Failed to load BallTracker: \(error)")
+        }
+
+        do {
+            courtDetector = try CourtDetectorInference()
+            print("[TennisVision] CourtDetector model loaded")
+        } catch {
+            print("[TennisVision] Failed to load CourtDetector: \(error)")
         }
     }
 
@@ -54,13 +61,20 @@ final class InferenceEngine: @unchecked Sendable {
             autoreleasepool {
                 guard let (pixelBuffer, frames) = frameProcessor.process(sampleBuffer) else { return }
 
+                // Ball tracking — every frame
                 let ball = try? ballTracker?.predict(frames: frames)
+
+                // Pose estimation — every frame
                 let pose = try? poseEstimator.predict(pixelBuffer: pixelBuffer)
 
+                // Court detection — every 10 frames (court doesn't move fast)
                 courtFrameCounter += 1
                 var court: CourtDetectionResult? = nil
                 if courtFrameCounter % 10 == 0 {
-                    court = courtDetector.predict(frames: frames)
+                    // Court detector takes single frame (first 3 channels of the 9-channel stack)
+                    let singleFrameSize = 3 * 360 * 640
+                    let singleFrame = Array(frames[0..<singleFrameSize])
+                    court = try? courtDetector?.predict(singleFrameData: singleFrame)
                 }
 
                 // FPS calculation

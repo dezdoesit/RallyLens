@@ -41,11 +41,32 @@ struct OverlayView: View {
 
     private func drawCourt(context: GraphicsContext, size: CGSize, keypoints: [CGPoint]) {
         guard keypoints.count == 14 else { return }
+        // 14 keypoints from TennisCourtDetector:
+        // 0=top-left, 1=top-right, 2=bottom-left, 3=bottom-right (baselines)
+        // 4=singles-left-top, 5=singles-left-bottom
+        // 6=singles-right-top, 7=singles-right-bottom
+        // 8=service-top-left, 9=service-top-right
+        // 10=service-bottom-left, 11=service-bottom-right
+        // 12=center-service-top, 13=center-service-bottom
         let courtLines: [(Int, Int)] = [
-            (0, 1), (1, 2), (2, 3), (3, 0),
-            (4, 5), (5, 6), (6, 7), (7, 4),
-            (0, 4), (1, 5), (2, 6), (3, 7),
-            (8, 9), (10, 11),
+            // Top baseline
+            (0, 1),
+            // Bottom baseline
+            (2, 3),
+            // Left doubles sideline
+            (0, 2),
+            // Right doubles sideline
+            (1, 3),
+            // Left singles sideline
+            (4, 5),
+            // Right singles sideline
+            (6, 7),
+            // Top service line
+            (8, 9),
+            // Bottom service line
+            (10, 11),
+            // Center service line
+            (12, 13),
         ]
         var path = Path()
         for (a, b) in courtLines {

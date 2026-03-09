@@ -2,3 +2,9 @@
 .DS_Store
 model_best.pt
 xcuserdata/
+ckpts
+*.zip
+*.pt
+test_output
+Scripts/__pycache__/
+TennisVision/Models/CourtDetector.mlpackage/
