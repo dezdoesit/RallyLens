@@ -4,6 +4,7 @@ import CoreVideo
 final class VideoFileReader: @unchecked Sendable {
 
     private let asset: AVAsset
+    private let videoTrack: AVAssetTrack
     private let readQueue = DispatchQueue(label: "com.tennisvision.videoreader", qos: .userInitiated)
     private var isReading = false
 
@@ -18,18 +19,19 @@ final class VideoFileReader: @unchecked Sendable {
         self.asset = AVAsset(url: url)
         self.duration = try await asset.load(.duration)
 
-        guard let videoTrack = try await asset.loadTracks(withMediaType: .video).first else {
+        guard let track = try await asset.loadTracks(withMediaType: .video).first else {
             throw VideoReaderError.noVideoTrack
         }
+        self.videoTrack = track
 
-        let size = try await videoTrack.load(.naturalSize)
-        let transform = try await videoTrack.load(.preferredTransform)
+        let size = try await track.load(.naturalSize)
+        let transform = try await track.load(.preferredTransform)
         let transformedSize = size.applying(transform)
         self.videoSize = CGSize(
             width: abs(transformedSize.width),
             height: abs(transformedSize.height)
         )
-        self.frameRate = try await Float(videoTrack.load(.nominalFrameRate))
+        self.frameRate = try await Float(track.load(.nominalFrameRate))
     }
 
     func start() {
@@ -50,17 +52,6 @@ final class VideoFileReader: @unchecked Sendable {
             kCVPixelBufferPixelFormatTypeKey as String: kCVPixelFormatType_32BGRA
         ]
 
-        let semaphore = DispatchSemaphore(value: 0)
-        var tracks: [AVAssetTrack] = []
-
-        Task {
-            tracks = (try? await asset.loadTracks(withMediaType: .video)) ?? []
-            semaphore.signal()
-        }
-        semaphore.wait()
-
-        guard let videoTrack = tracks.first else { return }
-
         let trackOutput = AVAssetReaderTrackOutput(track: videoTrack, outputSettings: outputSettings)
         trackOutput.alwaysCopiesSampleData = false
 
@@ -72,10 +63,7 @@ final class VideoFileReader: @unchecked Sendable {
 
         while isReading && reader.status == .reading {
             guard let sampleBuffer = trackOutput.copyNextSampleBuffer() else { break }
-
             onFrame?(sampleBuffer)
-
-            // Pace to approximate real-time playback
             Thread.sleep(forTimeInterval: frameDuration)
         }
 
