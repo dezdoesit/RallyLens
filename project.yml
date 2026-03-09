@@ -1,0 +1,42 @@
+name: TennisVision
+options:
+  bundleIdPrefix: com.tennisvision
+  deploymentTarget:
+    iOS: "26.0"
+  xcodeVersion: "26.0"
+  createIntermediateGroups: true
+  generateEmptyDirectories: true
+
+settings:
+  base:
+    SWIFT_VERSION: "6.0"
+    TARGETED_DEVICE_FAMILY: "1"
+    IPHONEOS_DEPLOYMENT_TARGET: "26.0"
+    SWIFT_STRICT_CONCURRENCY: complete
+
+targets:
+  TennisVision:
+    type: application
+    platform: iOS
+    sources:
+      - path: TennisVision
+    resources:
+      - path: TennisVision/Resources
+        optional: true
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.tennisvision.app
+        INFOPLIST_FILE: TennisVision/Info.plist
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        CODE_SIGN_STYLE: Automatic
+        SWIFT_EMIT_LOC_STRINGS: "YES"
+    info:
+      path: TennisVision/Info.plist
+      properties:
+        NSCameraUsageDescription: "TennisVision needs camera access to analyze tennis matches in real-time"
+        NSPhotoLibraryUsageDescription: "TennisVision needs photo library access to analyze recorded videos"
+        UILaunchScreen: {}
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
