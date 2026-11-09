@@ -63,13 +63,6 @@
 			path = ViewModels;
 			sourceTree = "<group>";
 		};
-		27BC0238B5FCC0538328C585 /* Resources */ = {
-			isa = PBXGroup;
-			children = (
-			);
-			path = Resources;
-			sourceTree = "<group>";
-		};
 		29CF612A9220CDA0D4C6C768 /* Views */ = {
 			isa = PBXGroup;
 			children = (
@@ -90,7 +83,6 @@
 				EDE891281F60AC6957F27665 /* Inference */,
 				529922FCF4B98843478F3249 /* Models */,
 				B521030F0D906DEDC9C2ABBD /* Overlay */,
-				27BC0238B5FCC0538328C585 /* Resources */,
 				20A487A7F89051ECADE803B4 /* Utils */,
 				2731220271C7383F3E88DCC8 /* ViewModels */,
 				29CF612A9220CDA0D4C6C768 /* Views */,
@@ -304,13 +296,13 @@
 				CODE_SIGN_IDENTITY = "-";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = LURMZC2XJB;
+				DEVELOPMENT_TEAM = ZB5WA6672J;
 				INFOPLIST_FILE = TennisVision/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.tennisvision.app;
+				PRODUCT_BUNDLE_IDENTIFIER = com.tennisvisin.app;
 				SDKROOT = iphoneos;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -389,13 +381,13 @@
 				CODE_SIGN_IDENTITY = "-";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = LURMZC2XJB;
+				DEVELOPMENT_TEAM = ZB5WA6672J;
 				INFOPLIST_FILE = TennisVision/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.tennisvision.app;
+				PRODUCT_BUNDLE_IDENTIFIER = com.tennisvisin.app;
 				SDKROOT = iphoneos;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				TARGETED_DEVICE_FAMILY = "1,2";
