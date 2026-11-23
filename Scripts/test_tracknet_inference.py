@@ -18,7 +18,7 @@ import torch
 import torch.nn as nn
 
 # ─── Project paths ────────────────────────────────────────────────
-PROJECT_ROOT = "/Users/alex/Documents/Codes/Swing"
+PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 WEIGHTS_PATH = os.path.join(PROJECT_ROOT, "model_best.pt")
 VIDEO_PATH = os.path.join(PROJECT_ROOT, "Videos_20260309092950.mp4")
 COREML_PATH = os.path.join(PROJECT_ROOT, "TennisVision/Models/BallTracker.mlpackage")

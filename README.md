@@ -1,8 +1,10 @@
-# TennisVision
+# RallyLens
 
 Real-time tennis analysis app for iOS 26, running entirely on-device with CoreML + Apple Vision.
 
 Tracks the tennis ball, detects player pose, and identifies court lines — all in real-time on iPhone.
+
+The current Xcode target is named `TennisVision`.
 
 ## Features
 
@@ -26,7 +28,7 @@ Tracks the tennis ball, detects player pose, and identifies court lines — all 
 
 ```bash
 git clone <repo-url>
-cd Swing
+cd RallyLens
 brew install xcodegen   # if not installed
 xcodegen generate
 open TennisVision.xcodeproj
@@ -306,172 +308,3 @@ Model weights are subject to their respective licenses:
 - WASB-SBDT: [MIT License](https://github.com/nttcom/WASB-SBDT/blob/main/LICENSE)
 - TennisCourtDetector: [MIT License](https://github.com/yastrebksv/TennisCourtDetector)
 - Apple Vision: Built into iOS, no separate license
-
-## Todoooooo
-整个系统需要的模型，按模块梳理：
-
----
-
-## 完整模型清单
-
-```
-TennisVision Pipeline
-│
-├── 1. 球追踪          → TrackNet / TrackNetV3
-├── 2. 球场检测        → Court Keypoint Detector
-├── 3. 姿态估计        → Apple Vision (内置，免费)
-├── 4. 击球分类        → Stroke Classifier (轻量)
-└── 5. 弹跳检测        → Bounce Detector (可选)
-```
-
----
-
-## 模型 1：球追踪 — TrackNet
-
-| 项目 | 详情 |
-|---|---|
-| **任务** | 输入连续3帧，输出球的位置 heatmap |
-| **输入** | `(1, 9, 360, 640)` Float32 |
-| **输出** | `(1, 1, 360, 640)` Heatmap |
-| **参数量** | ~4M |
-| **推理耗时** | ~5ms (ANE) |
-| **权重来源** | 需训练或下载预训练权重 |
-
-**预训练权重获取：**
-```
-https://github.com/yastrebksv/TrackNet
-→ 提供 balltrackerbest.pt
-
-https://github.com/nttcom/WASB-SBDT  (TrackNetV3)
-→ 更新的版本，精度更高
-```
-
-**CoreML 转换可行性：** ✅ 已验证（Apple Developer Forums 有人成功）
-
----
-
-## 模型 2：球场检测 — Court Keypoint Detector
-
-| 项目 | 详情 |
-|---|---|
-| **任务** | 输入一帧，回归 14 个关键点坐标 |
-| **输入** | `(1, 3, 360, 640)` Float32 |
-| **输出** | `(1, 28)` — 14点×(x,y) |
-| **Backbone** | ResNet-18（轻量）或 ResNet-50（精准）|
-| **参数量** | ~11M (ResNet-18) |
-| **推理耗时** | ~8ms (ANE) |
-| **权重来源** | 需下载或自训练 |
-
-**预训练权重获取：**
-```
-https://github.com/yastrebksv/TennisCourtDetector
-→ 提供 model_tennis_court_det.pt
-→ PyTorch，ResNet-50 backbone
-```
-
-**CoreML 转换可行性：** ✅ ResNet 系列转换成熟
-
----
-
-## 模型 3：姿态估计 — Apple Vision（内置）
-
-这个**不需要任何模型文件**，Apple 已经内置在 Vision framework 里：
-
-```swift
-// 2D 姿态（iOS 14+）
-VNDetectHumanBodyPoseRequest()   // 17个关节点
-
-// 3D 姿态（iOS 17+，iPhone 15 Pro Max 支持）
-VNDetectHumanBodyPose3DRequest() // 需要 LiDAR
-```
-
-| 项目 | 详情 |
-|---|---|
-| **关节点数量** | 17个（COCO格式）|
-| **运行位置** | 完全在 ANE，系统级优化 |
-| **推理耗时** | ~2-3ms |
-| **需要下载** | ❌ 系统内置 |
-
----
-
-## 模型 4：击球类型分类 — Stroke Classifier
-
-这是可以**自己训练的最轻量模型**，输入是关节点序列：
-
-| 项目 | 详情 |
-|---|---|
-| **任务** | 正手 / 反手 / 发球 / 截击 / 其他 |
-| **输入** | 关节点时序序列 `(T, 34)` — T帧 × 17点×xy |
-| **输出** | 5类 softmax 概率 |
-| **架构** | LSTM 或小型 Transformer |
-| **参数量** | <1M（极轻量）|
-| **推理耗时** | <1ms |
-| **训练数据** | THETIS 数据集（300段标注视频）|
-
-```
-THETIS 数据集：
-https://thetis.image.ntua.gr/
-→ 12种击球类型，多视角，免费学术使用
-```
-
-这个模型的输入**来自模型3的输出**（关节点坐标），所以不需要额外视频帧，极为轻量。
-
----
-
-## 模型 5：弹跳检测 — Bounce Detector（可选）
-
-| 项目 | 详情 |
-|---|---|
-| **任务** | 判断球是否刚刚弹跳 |
-| **输入** | 球的轨迹序列 `(N, 3)` — N帧 × (x,y,confidence) |
-| **输出** | 是否弹跳 (binary) |
-| **架构** | 传统 ML：`TimeSeriesForestClassifier` 或小 LSTM |
-| **参数量** | 极小 |
-| **运行位置** | CPU，但几乎不耗时 |
-
-这个不是深度学习模型，用**轨迹曲率突变**就能检测，甚至可以写规则：
-
-```swift
-// 简单规则：Y方向速度从正变负 = 弹跳
-func detectBounce(trajectory: [CGPoint]) -> Bool {
-    guard trajectory.count >= 3 else { return false }
-    let n = trajectory.count
-    let vy_prev = trajectory[n-2].y - trajectory[n-3].y
-    let vy_curr = trajectory[n-1].y - trajectory[n-2].y
-    return vy_prev > 0 && vy_curr < 0  // 速度方向反转
-}
-```
-
----
-
-## 模型依赖关系图
-
-```
-相机帧
-  │
-  ├──→ [TrackNet] ──────────→ 球坐标 (x,y,conf)
-  │                                │
-  │                                ├──→ [Bounce Detector] → 是否弹跳
-  │                                │
-  ├──→ [Court Detector] ───→ 14关键点 + Homography
-  │                                │
-  │         球坐标 × H ────────────→ 落点实际坐标 → in/out 判断
-  │
-  └──→ [Vision Pose] ──────→ 17关节点
-                                   │
-                            [Stroke Classifier] → 击球类型
-```
-
----
-
-## 汇总对比
-
-| 模型 | 需要下载 | 文件大小 | 转 CoreML | 频率 |
-|---|---|---|---|---|
-| TrackNet | ✅ | ~60MB | 需转换 | 每帧 |
-| Court Detector | ✅ | ~90MB | 需转换 | 每10帧 |
-| Vision Pose | ❌ 内置 | 0 | 无需 | 每帧 |
-| Stroke Classifier | 自训练 | <5MB | 需转换 | 每次击球 |
-| Bounce Detector | ❌ 规则 | 0 | 无需 | 每帧 |
-
-**最小可行版本（MVP）：** 只用 TrackNet + Vision Pose，App 的核心功能（球追踪 + 姿态叠加）就能跑起来，Court Detector 和 Stroke Classifier 后续迭代加入。
